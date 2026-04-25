@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temple Border Clash</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- MODE SELECTION MODAL -->
+<div id="mode-modal" class="modal">
+    <div class="modal-content mode-select-content">
+        <div class="modal-logo">🛕</div>
+        <h1 class="modal-title">TEMPLE BORDER CLASH</h1>
+        <p class="modal-subtitle">Thailand vs Cambodia · Preah Vihear Conflict</p>
+        <div class="mode-buttons">
+            <button class="mode-btn" id="vs-bot-btn">
+                <span class="mode-icon">🤖</span>
+                <span class="mode-label">VS BOT</span>
+                <span class="mode-desc">Play as Thailand against AI Cambodia</span>
+            </button>
+            <button class="mode-btn" id="vs-human-btn">
+                <span class="mode-icon">👥</span>
+                <span class="mode-label">2 PLAYERS</span>
+                <span class="mode-desc">Local multiplayer — pass & play</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- INSTRUCTIONS MODAL -->
+<div id="instructions-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h2>Temple Border Clash</h2>
+        <p id="mode-label-display" style="color: var(--power-color); font-weight: bold; letter-spacing: 2px;"></p>
+        <p><strong>Objective:</strong> Control temples and crush enemy resources before ceasefire.</p>
+        <p><strong>Setup:</strong> Each player starts with 3 Infantry on HQ, 5 Power, 5 Supply, and 1 Chance card.</p>
+        <p><strong>Phases:</strong></p>
+        <ul>
+            <li><strong>Resource Phase:</strong> Gain 1 Power per claimed temple, or 1 Supply if none controlled.</li>
+            <li><strong>Action Phase:</strong> Choose 1 action (Deploy, Claim, Attack, Repair, or play a card).</li>
+        </ul>
+        <p><strong>Deploy cost (Supply):</strong> HQ→A = 2, A→B = 1, B→C = 1 (mirrored for Blue)</p>
+        <button id="start-btn">Start Game</button>
+    </div>
+</div>
+
+<!-- DEPLOY TARGET MODAL -->
+<div id="deploy-modal" class="modal" style="display:none;">
+    <div class="modal-content deploy-modal-content">
+        <h3 id="deploy-modal-title">Choose Deploy Target</h3>
+        <p id="deploy-modal-subtitle" style="color: var(--supply-color); margin: 0 0 20px 0; font-size: 0.9rem;"></p>
+        <div id="deploy-options" class="deploy-options"></div>
+        <button class="cancel-btn" id="deploy-cancel-btn">Cancel</button>
+    </div>
+</div>
+
+<!-- CLAIM TARGET MODAL -->
+<div id="claim-modal" class="modal" style="display:none;">
+    <div class="modal-content deploy-modal-content">
+        <h3>Choose Temple to Claim</h3>
+        <p style="color: var(--power-color); margin: 0 0 20px 0; font-size: 0.9rem;">Costs 1 Power · Must be occupied by you alone</p>
+        <div id="claim-options" class="deploy-options"></div>
+        <button class="cancel-btn" id="claim-cancel-btn">Cancel</button>
+    </div>
+</div>
+
+<!-- ATTACK TARGET MODAL -->
+<div id="attack-modal" class="modal" style="display:none;">
+    <div class="modal-content deploy-modal-content">
+        <h3>Choose Temple to Attack</h3>
+        <p style="color: var(--red-faction); margin: 0 0 20px 0; font-size: 0.9rem;">Costs 1 Power · Must be contested by both forces</p>
+        <div id="attack-options" class="deploy-options"></div>
+        <button class="cancel-btn" id="attack-cancel-btn">Cancel</button>
+    </div>
+</div>
+
+<!-- DICE ROLL MODAL -->
+<div id="dice-modal" class="modal" style="display:none;">
+    <div class="modal-content dice-modal-content">
+        <h3 id="dice-title">⚔️ COMBAT ROLL</h3>
+        <div class="dice-arena">
+            <div class="dice-side attacker-side">
+                <div class="dice-label" id="attacker-label">ATTACKER</div>
+                <div class="dice" id="attacker-dice">?</div>
+            </div>
+            <div class="dice-vs">VS</div>
+            <div class="dice-side defender-side">
+                <div class="dice-label" id="defender-label">DEFENDER</div>
+                <div class="dice" id="defender-dice">?</div>
+            </div>
+        </div>
+        <div id="dice-result" class="dice-result"></div>
+        <button id="dice-close-btn" class="dice-close-btn" style="display:none;">Continue</button>
+    </div>
+</div>
+
+<div class="game-board" id="game-board" style="display:none;">
+
+    <!-- ROUND COUNTER -->
+    <div id="round-counter" class="round-counter">ROUND <span id="round-num">1</span> / 10</div>
+
+    <!-- TURN INDICATOR -->
+    <div id="turn-indicator" class="turn-banner">
+        <span id="turn-phase-label" style="font-size:0.9rem; opacity:0.7; display:block; letter-spacing:2px;"></span>
+        Current Turn: <span id="current-player-display">RED</span>
+    </div>
+
+    <!-- RED ZONE (Thailand) -->
+    <div class="faction-zone red-zone">
+        <div class="capital-wrapper">
+            <div class="capital" id="red-capital">
+                <div class="capital-label">🇹🇭 THAILAND HQ</div>
+                <div class="troop-display" id="red-hq-troops"></div>
+            </div>
+        </div>
+        <div class="chance-deck" id="red-chance-deck">CHANCE</div>
+        <div class="resource-trackers" id="red-trackers">
+            <div class="tracker-label">⚡ POWER</div>
+            <div class="tracker power" id="red-power-tracker"></div>
+            <div class="tracker-label">📦 SUPPLY</div>
+            <div class="tracker supply" id="red-supply-tracker"></div>
+        </div>
+    </div>
+
+    <!-- BORDER ZONE (Temples) -->
+    <div class="border-zone">
+        <div class="temple" id="temple-a">
+            <div class="temple-name">TEMPLE A</div>
+            <div class="temple-troops" id="temple-a-troops"></div>
+            <div class="temple-flag" id="temple-a-flag"></div>
+        </div>
+        <div class="temple" id="temple-b">
+            <div class="temple-name">TEMPLE B</div>
+            <div class="temple-troops" id="temple-b-troops"></div>
+            <div class="temple-flag" id="temple-b-flag"></div>
+        </div>
+        <div class="temple" id="temple-c">
+            <div class="temple-name">TEMPLE C</div>
+            <div class="temple-troops" id="temple-c-troops"></div>
+            <div class="temple-flag" id="temple-c-flag"></div>
+        </div>
+    </div>
+
+    <!-- BLUE ZONE (Cambodia) -->
+    <div class="faction-zone blue-zone">
+        <div class="resource-trackers" id="blue-trackers">
+            <div class="tracker-label">⚡ POWER</div>
+            <div class="tracker power" id="blue-power-tracker"></div>
+            <div class="tracker-label">📦 SUPPLY</div>
+            <div class="tracker supply" id="blue-supply-tracker"></div>
+        </div>
+        <div class="chance-deck" id="blue-chance-deck">CHANCE</div>
+        <div class="capital-wrapper">
+            <div class="capital" id="blue-capital">
+                <div class="capital-label">🇰🇭 CAMBODIA HQ</div>
+                <div class="troop-display" id="blue-hq-troops"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="UI.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
